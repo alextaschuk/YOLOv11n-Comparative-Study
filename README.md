@@ -393,10 +393,10 @@ The notebooks are configured to run in Google Colab, so they will need to be mod
     - You use a different name, but make sure to update the notebooks so that they use the correct folder.
 3. Clone this repository, or download the notebooks individually, then open them in Google Colab.
 4. Run the `yolov11n.ipynb` notebook first. This notebook does the following:
-    1. Unzips the dataset locally in the VM and cleans the data into a YOLO-compatible format
+    1. Unzips the dataset and cleans the data into a YOLO-compatible format
     2. Trains the baseline YOLO model, analyzes the results, and makes graphs and tables using the results. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_baseline/`
     3. Trains the model for the controlled experiment, analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the experiment model's results to the baseline's. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_1280px/`
-    4. Trains the improvement model, analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the improvement model's results to the experiments' results. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_improvement/`
+    4. Trains the iterative improvement model, analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the improvement model's results to the experiments' results. The first cycle's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_improvement1/`. The second cycle's results are stored at '/YOLOv11-Project/runs/yolov11n_improvement2/`.
 5. Run the `yolo_multi_version_comparison.ipynb` notebook. This notebook does the following:
     1. Unzips the dataset locally in the VM and cleans the data into a YOLO-compatible format
     2. Trains YOLOv8n, YOLOv9t, and YOLOv10n on the same dataset as YOLOv11n with the same hyperparameters. The results of each model are saved at `/YOLOv11-Project/runs/model_name_comparison/` (e.g., `/YOLOv11-Project/runs/yolov8n_comparison/`).
