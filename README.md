@@ -402,4 +402,4 @@ The notebooks are configured to run in Google Colab, so they will need to be mod
     2. Trains YOLOv8n, YOLOv9t, and YOLOv10n on the same dataset as YOLOv11n with the same hyperparameters. The results of each model are saved at `/YOLOv11-Project/runs/model_name_comparison/` (e.g., `/YOLOv11-Project/runs/yolov8n_comparison/`).
     3. Results of all four models are loaded into the runtime, and analysis is conducted to produce a comparison graph and other information. The comparison graphs are saved at `/YOLOv11-Project/multi-version-comparison/`.
 
-*Note*: All of my results can be found in this repository in [results.zip](/results.zip).
+*Note*: My results for each model are in [results.zip](/results.zip).
