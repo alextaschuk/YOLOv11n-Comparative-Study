@@ -7,7 +7,7 @@
 3. **[Baseline Model Training](#baseline-model-training)**
 4. **[Baseline Model Results](#baseline-model-results)**
 5. **[Controlled Experiment](#controlled-experiment)**
-6. **[Model Improvement](#model-improvement)**
+6. **[Model Improvement Cycles](#model-improvement-cycles)**
 7. **[Multi-Version Comparison](#multi-version-comparison)**
 8. **[Conclusion](#conclusion)**
 9. **[Training Pipeline](#training-pipeline)**
@@ -41,7 +41,7 @@ There are five parts to this project:
 
 ## VisDrone Dataset
 
-YOLOv11 nano (or, YOLOv11n) was trained as a basline model using the VisDrone2019-DET trainset dataset. This dataset contains 6,471 aerial images taken from a drone. Each image has a corresponding annotation file (a `.txt` file), which contains the following columns: `bbox_left`, `bbox_top`, `bbox_width`, `bbox_height`, `score`, `category`, `truncation`, `occlusion`.
+YOLOv11 nano (or, YOLOv11n) was trained as a baseline model using the VisDrone2019-DET trainset dataset. This dataset contains 6,471 aerial images taken from a drone. Each image has a corresponding annotation file (a `.txt` file), which contains the following columns: `bbox_left`, `bbox_top`, `bbox_width`, `bbox_height`, `score`, `category`, `truncation`, `occlusion`.
 
 Prior to training, the VisDrone dataset needed to be converted to YOLO`s format, so several changes were made:
 
@@ -49,7 +49,7 @@ Prior to training, the VisDrone dataset needed to be converted to YOLO`s format,
 - Bounding boxes were changed to be bound by their center points (`x_center`, `y_center`) + (`width`, `height`)
 - Bounding boxes were normalized to the interval $[0, 1]$
 - Class IDs were remapped from 1-11 to 0-10.
-    - The categoires are: `pedestrian`, `people`, `bicycle`, `car`, `van`, `truck`, `tricycle`, `awning-tricycle`, `bus`, `motor`, `others`
+    - The categories are: `pedestrian`, `people`, `bicycle`, `car`, `van`, `truck`, `tricycle`, `awning-tricycle`, `bus`, `motor`, `others`
 
 Prior to remapping the class IDs, the dataset was filtered and cleaned:
 - Any annotation whose class ID is 0 or greater than 11 is skipped.
@@ -132,47 +132,47 @@ This includes:
 
 YOLOv11 splits loss into three components:
 
-1. Bounding Box Regression Loss (Box Loss): Measures how accuratly the model's predicted bounding box coordinates match the ground truth bounding box coordinates.
+1. Bounding Box Regression Loss (Box Loss): Measures how accurately the model's predicted bounding box coordinates match the ground truth bounding box coordinates.
 
 2. Classification Loss: Measures how well the model was able to assign classification labels to each detected object.
 
-3. Distribution Focal Loss (DFL): Since object edges can be ambiguous due to blurry boundaries or occlusion from another object, the YOLOv11 doesn't predict a single exact box edge coordinate. Instead, it predicts a distribution over possible locations that the edge of the bounding box could at.
+3. Distribution Focal Loss (DFL): Since object edges can be ambiguous due to blurry boundaries or occlusion from another object, the YOLOv11 doesn't predict a single exact box edge coordinate. Instead, it predicts a distribution over possible locations where the edge of the bounding box could be.
 
-Training loss is computed on the training sets during a forward pass. Validation loss is computed after the last 20% of images are used during the validation stage after an epoch has completed.
+Training loss is computed on the training sets during a forward pass. Validation loss is computed after the last 20% of images are used during the validation stage, after an epoch has completed.
 
-![Baseline-Training-Loss-Graphs](/results/yolov11n_baseline/loss_components.png)
+<img width="2067" height="603" alt="image" src="https://github.com/user-attachments/assets/f1269ac6-26a2-42ae-8a67-de4bddfb8db2" />
 
 #### Box Loss
 
 Training loss began a bit over 2.0 and decreased steeply for the first ~6 epochs, then continued to fall steadily even in the later epochs (though it clearly slowed down to some degree). Epoch 50 ended with a loss of 1.4. It may be worth testing with 60 or 65 epochs to see how close it is to plateauing.
 
-Validation loss began at just over 1.9 and followed a similar start trajectory to training loss where is experienced a sharp drop for the first ~6 epochs, then continued to fall steadily. However, around epoch 25 it plateaued and didn't move by much for the last half of the epochs. Epoch 50 ended with a loss a bit under 1.5.
+Validation loss began at just over 1.9 and followed a similar start trajectory to training loss, where it experienced a sharp drop for the first ~6 epochs, then continued to fall steadily. However, around epoch 25, it plateaued and didn't move much for the last half of the epochs. Epoch 50 ended with a loss of a bit under 1.5.
 
 #### Classification Loss
 
-Training loss began just over 3.5 and dropped sharply to ~1.25 by epoch 10, then severly plateaued for the rest of the epochs. Epoch 50 ended with a loss just under 1.0.
+Training loss began just over 3.5 and dropped sharply to ~1.25 by epoch 10, then severely plateaued for the rest of the epochs. Epoch 50 ended with a loss just under 1.0.
 
 Validation loss followed a nearly identical trajectory to the training loss. That said, it started much lower than the training loss; epoch 1's loss was ~1.6. Epoch 50 ended with a loss just above 1.0.
 
 #### DFL
 
-Training loss began just around 1.5 and severly dropped for the first ~15 epochs, then plateaues once it reaches a loss of ~0.91 around epoch 26.
+Training loss began just around 1.5 and severely dropped for the first ~15 epochs, then plateaued once it reached a loss of ~0.91 around epoch 26.
 
-Validation loss follows a very similar path and stays just above the training loss curve for nearly every epoch. It begins with a loss value just over 0.98, sees a short spike during epochs 3-5, then has a gradual decline for nearly the rest of the training period.
+Validation loss follows a very similar path and stays just above the training loss curve for nearly every epoch. It begins with a low value just over 0.98, sees a short spike during epochs 3-5, then has a gradual decline for nearly the rest of the training period.
 
 ### Mean Average Precision (mAP), Precision, and Recall
 
-In order to determine if convergent behavior was displayed, the standard deviation of the validation loss over the last 10 epochs was calculated against a threshold of $0.005$. For baseline training, the standard deviation of the validation loss over the last 10 epochs was $0.01517$, indicating the model had not yet fully converged by epoch 50.That said, the declining trend in the final epochs suggests convergence was approaching.
+In order to determine if convergent behavior was displayed, the standard deviation of the validation loss over the last 10 epochs was calculated against a threshold of $0.005$. For baseline training, the standard deviation of the validation loss over the last 10 epochs was $0.01517$, indicating the model had not yet fully converged by epoch 50. That said, the declining trend in the final epochs suggests convergence was approaching.
 
-![composite-loss-graph](/results/yolov11n_baseline/composite_loss_curve.png)
+<img width="1287" height="637" alt="image" src="https://github.com/user-attachments/assets/52edad7a-1068-4086-94ed-d523ef1dd20f" />
 
-The composite loss curve shows a clear plateau around epoch 18, It may be worth training the model for an additional 10 epochs to improve the box loss, but with the classification loss and DFL loss both having plateaued already, this could easily cause convergence to occur.
+The composite loss curve shows a clear plateau around epoch 18. It may be worth training the model for an additional 10 epochs to improve the box loss, but with the classification loss and DFL loss both having plateaued already, this could easily cause convergence to occur.
 
-![loss-difference](/results/yolov11n_baseline/fitting_diagnostics.png)
+<img width="1807" height="643" alt="image" src="https://github.com/user-attachments/assets/1e96a3fe-edd1-4f66-8dc8-08008db1595c" />
 
 #### Difference Between Validation Loss & Training Loss Per Epoch
 
-The blue bars indicate epochs where the validation loss is lower than the training loss, and orange bars are epochs where the opposite is true. Starting at epoch 40 and onward there are only organge bars, and they are consistently growing larger, which may indicate that overfitting is beginning to occur.
+The blue bars indicate epochs where the validation loss is lower than the training loss, and the orange bars indicate epochs where the opposite is true. Starting at epoch 40 and onward, there are only orange bars, and they are consistently growing larger, which may indicate that overfitting is beginning to occur.
 
 #### Smoothed Loss Curves
 
@@ -180,33 +180,33 @@ This graph shows the composite training loss and validation loss curve from the 
 
 ---
 
-The mAP metric evaluates how well the model is able to find object and how correct it is at identifying the class that an object belongs to. Precision measures how correct the model was in its predictions. Recall mesaures how many objects the model was able to find out of all of the objects that are in the image.
+The mAP metric evaluates how well the model is able to find objects and how correctly it is at identifying the class that an object belongs to. Precision measures how correct the model was in its predictions. Recall measures how many objects the model was able to find out of all of the objects that are in the image.
 
 There are two mAP metrics that are evaluated:
 
 - mAP@0.50: Measures the mAP at a fixed IoU threshold of 0.50. This tells us if the model is able to identify objects at all.
-- mAP@0.50:0.95: Measures the average mAP across 10 different IoU threshholds ranging from 0.50 to 0.95 (with a step of 0.05). This metric is stricter and evaluates how precise the model is at object detection.
+- mAP@0.50:0.95: Measures the average mAP across 10 different IoU thresholds ranging from 0.50 to 0.95 (with a step of 0.05). This metric is stricter and evaluates how precise the model is at object detection.
 
-![detection-metrics](/results/yolov11n_baseline/detection_metrics.png)
+<img width="1806" height="643" alt="image" src="https://github.com/user-attachments/assets/8640fd4d-5a21-41ab-a82d-734328c8d11d" />
 
 #### Mean Average Precision (mAP)
 
-Both curves in the mAP graph rise steeply for the first ~12 epochs, which is normal as the model quickly learns from the pretrained weights adapting to VisDrone. Growth slows after epoch ~24, and both curves begin to plateau around epoch 45. That said, neither curve has fully flattened by epoch 50, which is consistent with the "not yet converged" diagnosis. At the end of the training period, there is a large gap between mAP@0.50 and mAP@0.50:0.95. This is indicates that the model is good a finding objects, but it can't draw very precise boxes around them.
+Both curves in the mAP graph rise steeply for the first ~12 epochs, which is normal as the model quickly learns from the pretrained weights, adapting to VisDrone. Growth slows after epoch ~24, and both curves begin to plateau around epoch 45. That said, neither curve has fully flattened by epoch 50, which is consistent with the "not yet converged" diagnosis. At the end of the training period, there is a large gap between mAP@0.50 and mAP@0.50:0.95. This indicates that the model is good at finding objects, but it can't draw very precise boxes around them.
 
 #### Precision & Recall
 
-The precision and recall lines follow each other and consistently increase during the training period. Towards the end of the training period their growth is slow, but it hasn't plateau ed yet. Precision ends around 41% and recall ends around 33%, meaning that the model is more conservative with its box predictions. When the model draws a box around an object, prediction is usually correct, but it also misses a few boxes in each image as a result.
+The precision and recall lines follow each other and consistently increase during the training period. Towards the end of the training period, their growth is slow, but it hasn't plateaued yet. Precision ends around 41%, and recall ends around 33%, meaning that the model is more conservative with its box predictions. When the model draws a box around an object, prediction is usually correct, but it also misses a few boxes in each image as a result.
 
 ### Overall Baseline Results
 
-![results](/results/yolov11n_baseline/results.png)
+<img width="2400" height="1200" alt="image" src="https://github.com/user-attachments/assets/01046680-8f44-417a-868c-fd30ed1f0cf6" />
 
-Overall, class loss converged the fastest while box loss still has room for improvement. There is some evidence of overfitting, but nothing too serious. The YOLOv11n model is the smallest YOLOv11 variant. This is important because the dataset contains several small objects (e.g., pedestrians), which are hard for the model to pick up on. 
+Overall, class loss converged the fastest, while box loss still has room for improvement. There is some evidence of overfitting, but nothing too serious. The YOLOv11n model is the smallest YOLOv11 variant. This is important because the dataset contains several small objects (e.g., pedestrians), which are hard for the model to pick up on. 
 
 ## Controlled Experiment
 
 ### Experimental Settings
-For my controlled experiment, I decided to explore how doubling the image resolution from 640 px to 1280 px would improve the model's detection precision. To handle larger resolution sizes, batch size was reduced by 75% to 16/32 (depending on amount of RAM the GPU has). For my experiment, I used an A100 GPU with 80GB of RAM, so my batch size was 32. All other hyperparameters and other settings remained the same as they during the baseline training.
+For my controlled experiment, I decided to explore how doubling the image resolution from 640 px to 1280 px would improve the model's detection precision. To handle larger resolution sizes, the batch size was reduced by 75% to 16/32 (depending on the amount of RAM the GPU has). For my experiment, I used an A100 GPU with 80GB of RAM, so my batch size was 32. All other hyperparameters and other settings remained the same as they did during the baseline training.
 
 ### Results
 
@@ -226,23 +226,24 @@ All of the experimental model's individual results can be found in [results/yolo
 | GPU & GPU RAM                | A100, 42GB     | A100, 80GB         |
 | Inference Speed <br>(ms/img) | 0.3            | 1.0                |
 
-![loss-comparison](/results/yolov11n_1280px/comparison_loss_curves.png)
+<img width="1807" height="643" alt="image" src="https://github.com/user-attachments/assets/efa90336-5b33-40e0-ae25-31052f6caf26" />
 
 The experimental model's training loss and validation loss follow a very similar curve to the baseline's. The model's best epoch was much closer to the end of the training period, so there may be more room for improvement with a larger number of epochs.
 
-![metric-comparison](/results/yolov11n_1280px/comparison_metrics.png)
+<img width="2327" height="643" alt="image" src="https://github.com/user-attachments/assets/49632008-05cc-4b7c-ad90-045ac119c326" />
 
-Though the both models' loss curves are a similar shape, there is a clear improvement with the experimental model's results. Its validation loss, mAP@0.50, and map@0.50:0.95 are all is significantly better than the baseline's.
 
-There are other important considerations to make other than the experimental model's object detection abilities. A GPU with nearly double the amount of RAM as the one that trained the baseline model was used to train the experimental model, but the training time was 2.75x slower than the baseline's. Furthermore, the experimental model's inference speed is ~3.33x slower than the baseline. These metrics really matter when it comes down to your use case of the model and whether you care more about accuracy or speed.
+Though both models' loss curves are of a similar shape, there is a clear improvement with the experimental model's results. Its validation loss, mAP@0.50, and map@0.50:0.95 are all significantly better than the baseline's.
+
+There are other important considerations to make, other than the experimental model's object detection abilities. A GPU with nearly double the amount of RAM as the one that trained the baseline model was used to train the experimental model, but the training time was 2.75x slower than the baseline's. Furthermore, the experimental model's inference speed is ~3.33x slower than the baseline. These metrics really matter when it comes down to your use case of the model and whether you care more about accuracy or speed.
 
 ## Model Improvement Cycles
 
 I conducted two rounds of improvement cycles. because I thought the model still has room to improve. For the first round, I wanted to try improving the model by adding an additional 15 epochs (65 total). Though there were signs of convergence beginning and potential overfitting, I felt that there was still room for the model to grow.
 
-For the second round, I wanted to see if a different optimization algorithm could reduce how much the model plateaued. An optimiziation algorithm is used to update the model's weights during the training period. Since I used `optimizer='auto'` when I trained the model, Ultralytics selected AdamW optimizer. This optimization algorithm determines an individual parameter's step size. It tracks a smoothed average of recent gradients, and a smoothed average of squared gradients (these act as a measure of how volitile a parameter's gradient is). The algorithm causes noisy gradients to become smaller and smaller gradients to become larger. The algorithm also slowly shrinks all of the parameters towards zero during training so that the model doesn't overfit to individual weights. This leads to a quick drop 
+For the second round, I wanted to see if a different optimization algorithm could reduce how much the model plateaued. An optimization algorithm is used to update the model's weights during the training period. Since I used `optimizer='auto'` when I trained the model, Ultralytics selected the AdamW optimizer. This optimization algorithm determines an individual parameter's step size. It tracks a smoothed average of recent gradients and a smoothed average of squared gradients (these act as a measure of how volatile a parameter's gradient is). The algorithm causes noisy gradients to become smaller and smaller gradients to become larger. The algorithm also slowly shrinks all of the parameters towards zero during training so that the model doesn't overfit to individual weights. This leads to a quick drop 
 
-Stochastic Gradient Descent (SGD) is another optimization algorithm. SGD works by updating weights using gradients from small batches of training samples, with momentum helping to stabilize and accelerate convergence. I would like to see how the model performs with SGD because the algorithm has historically been favored for object detection. SGD often produces more stable and gradual progress, compared to AdamW which usually produces faster progress more agressively, so I think it is fair to give the model a bit more time to train.
+Stochastic Gradient Descent (SGD) is another optimization algorithm. SGD works by updating weights using gradients from small batches of training samples, with momentum helping to stabilize and accelerate convergence. I would like to see how the model performs with SGD because the algorithm has historically been favored for object detection. SGD often produces more stable and gradual progress, compared to AdamW, which usually produces faster progress more aggressively, so I think it is fair to give the model a bit more time to train.
 
 ### Experimental Model Results vs. Improvement Cycle 1 Results 
 
@@ -261,15 +262,16 @@ Stochastic Gradient Descent (SGD) is another optimization algorithm. SGD works b
 | Inference Speed <br>(ms/img) | 1.0                | 1.0                 |
 
 #### Improvement Model's Results
-![model-results](/results/yolov11n_improvement1/comparison_loss_curves.png)
 
-While the improvement model perform slightly better than the experiment model, these results suggest that there is still some room for improvement. None of the curves show significant plateauing, and there are no large gaps between the training and validation curves. Precision is still fairly higher than recall, meaning the model is still able to accurately detect objects, but the detected boxes aren't always localized with great precision. Increasing the number of epochs to 120-130 with a patience of 20-25 may needed to see how far the model's training can be streched out before it plateaus.
+<img width="1905" height="1204" alt="image" src="https://github.com/user-attachments/assets/7cfcb146-f325-4802-82bd-084c4c4dbfc4" />
+
+While the improvement model performs slightly better than the experiment model, these results suggest that there is still some room for improvement. None of the curves shows significant plateauing, and there are no large gaps between the training and validation curves. Precision is still fairly higher than recall, meaning the model is still able to accurately detect objects, but the detected boxes aren't always localized with great precision. Increasing the number of epochs to 120-130 with a patience of 20-25 may be needed to see how far the model's training can be stretched out before it plateaus.
 
 #### Experiment Model vs. Improvement Cycle 1
 
-![composite-loss-comparison](/results/yolov11n_improvement1/exp_vs_imp_loss_curves.png)
+<img width="1807" height="643" alt="image" src="https://github.com/user-attachments/assets/bc7a2abf-8a47-42e0-938e-49ba7e6e6d8b" />
 
-There is little improvement to the model's loss overall. The model still began to plateau towards the end of the training period.
+There is little improvement in the model's loss overall. The model still began to plateau towards the end of the training period.
 
 ---
 
@@ -291,17 +293,19 @@ There is little improvement to the model's loss overall. The model still began t
 
 
 #### Improvement Model's Results
-![model-results](/results/yolov11n_improvement2/comparison_loss_curves.png)
+
+<img width="1905" height="1204" alt="image" src="https://github.com/user-attachments/assets/2d7eab7f-5124-484f-bd3b-529a7c49ac47" />
 
 These results are very similar to the previous cycle's results versus the experiment model's. They suggest that there is still room for improvement; none of the curves have begun to plateau, and there are no large gaps between the training and validation curves. There is still a gap between precision and recall.
 
 #### Improvement Cycle 1 vs. Improvement Cycle 2
 
-![composite-loss-comparison](/results/yolov11n_improvement2/imp1_vs_imp2_loss_curves.png)
+<img width="1807" height="643" alt="image" src="https://github.com/user-attachments/assets/c8343b14-5058-485a-8019-8a91337e0103" />
 
-Both models converge to roughly the same loss, but the cycle 2 model increases slightly during the last few epochs. This may be a small noise spike, or it could indicate that there is still room for improvement before plateauing. SGD generalizes slightly better than AdamW, which often causes the loss to drop slower and more gradually, but leaves room for finding a flatter minimum.
 
-![map-and-validation-loss-comparison](/results/yolov11n_improvement2/imp1_vs_imp2_metrics.png)
+Both models converge to roughly the same loss, but the cycle 2 model increases slightly during the last few epochs. This may be a small noise spike, or it could indicate that there is still room for improvement before plateauing. SGD generalizes slightly better than AdamW, which often causes the loss to drop more slowly and gradually, but leaves room for finding a flatter minimum.
+
+<img width="2327" height="643" alt="image" src="https://github.com/user-attachments/assets/7b751914-b74b-4831-bd74-3870f3dae046" />
 
 Both curves on all three graphs begin to plateau around epoch 56. I think this cycle strengthens the evidence that training with ~120 epochs and a patience of ~20 may be a good next step to take.
 
@@ -335,7 +339,7 @@ I compared the baseline YOLOv11n model against three other YOLO versions:
 
 ---
 
-![map-precision-recall](/results/multi-version-comparison/comparison_bar_metrics.png)
+<img width="2327" height="669" alt="image" src="https://github.com/user-attachments/assets/89438bd4-a65e-4190-ad84-2880501b8248" />
 
 | Metric                       | YOLOv8n     | YOLOv9t     | YOLOv10n    | YOLOv11n   |
 | ---------------------------- | ----------- | ----------- | ----------- | ---------- |
@@ -344,11 +348,11 @@ I compared the baseline YOLOv11n model against three other YOLO versions:
 | Precision                    | 0.394       | **0.417**   | 0.402       | 0.413      |
 | Recall                       | 0.327       | 0.318       | 0.317       | **0.329**  |
 
-The baseline v11n model performed the best in three of the four metrics, but the spread for each metric is extremly minimal; no model is meaningfully better than another.
+The baseline v11n model performed the best in three of the four metrics, but the spread for each metric is extremely minimal; no model is meaningfully better than another.
 
 --- 
 
-![comparisons](/results/multi-version-comparison/comparison_size_speed_train.png)
+<img width="1807" height="802" alt="image" src="https://github.com/user-attachments/assets/24d2a0ba-17c7-4539-80cb-863f7066db75" />
 
 #### Model Size vs. Accuracy
 
@@ -366,11 +370,11 @@ YOLOv11n is the most accurate and the second smallest. That said, there is still
 | Total Time (ms/img)  | 6.47    | 7.77    | **4.57** | 7.32     |
 | Throughput (img/sec) | ~155    | ~129    | **~219** | ~137     |
 
-YOLOv10n's post processing time is significantly shorter than the other models'. This is because YOLOv10 removed non-maximum supression (NMS). NMS is a post-processing technique that removes redundant boxes that overlap each other for the same object.
+YOLOv10n's post-processing time is significantly shorter than the other models'. This is because YOLOv10 removed non-maximum suppression (NMS). NMS is a post-processing technique that removes redundant boxes that overlap each other for the same object.
 
 ## Conclusion
 
-The improvement model performed the best out of all models I trained. There are signs that it still has room for improvement, but it may be worth testing the experimental model with more epochs first, to see if there is any improvement left for it. The largest increase in performance was between the baseline and experiment models, with the image's resolution being the most significant contributor. This is because of the high number of small objects in the dataset, which can be hard to detect with low image resolution. The largest tradeoff with increasing resolution was the amount of time to train the model. None of the models suffered from overfitting or underfitting, but several did show signs of plateauing. Further improvements could be made, such as increasing the image resolution even more, using a bigger version of the model (e.g., small, medium, etc.), and/or increasing the number of epochs.
+The improvement model performed the best out of all the models I trained. There are signs that it still has room for improvement, but it may be worth testing the experimental model with more epochs first, to see if there is any improvement left for it. The largest increase in performance was between the baseline and experiment models, with the image's resolution being the most significant contributor. This is because of the high number of small objects in the dataset, which can be hard to detect with low image resolution. The largest tradeoff with increasing resolution was the amount of time to train the model. None of the models suffered from overfitting or underfitting, but several did show signs of plateauing. Further improvements could be made, such as increasing the image resolution even more, using a bigger version of the model (e.g., small, medium, etc.), and/or increasing the number of epochs.
 
 ## Training Pipeline
 
@@ -385,17 +389,17 @@ The notebooks are configured to run in Google Colab, so they will need to be mod
 
 1. Download the [VisDrone-DET2019 trainset dataset](https://github.com/VisDrone/VisDrone-Dataset) (1.44 GB) and place the .zip file in `My Drive` in Google Drive.
     - The path to this file should be `/content/drive/MyDrive/VisDrone2019-DET-train.zip`.
-2. In Google drive, create a folder called `YOLOv11-Project`
+2. In Google Drive, create a folder called `YOLOv11-Project`
     - You use a different name, but make sure to update the notebooks so that they use the correct folder.
 3. Clone this repository, or download the notebooks individually, then open them in Google Colab.
 4. Run the `yolov11n.ipynb` notebook first. This notebook does the following:
     1. Unzips the dataset locally in the VM and cleans the data into a YOLO-compatible format
     2. Trains the baseline YOLO model, analyzes the results, and makes graphs and tables using the results. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_baseline/`
     3. Trains the model for the controlled experiment, analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the experiment model's results to the baseline's. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_1280px/`
-    4. Trains the improvement model analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the improvement model's results to the experiments's. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_improvement/`
+    4. Trains the improvement model, analyzes the results, and makes graphs and tables using the results. Graphs are also generated to compare the improvement model's results to the experiments' results. The model's results and graphs are saved in Google Drive at `/YOLOv11-Project/runs/yolov11n_improvement/`
 5. Run the `yolo_multi_version_comparison.ipynb` notebook. This notebook does the following:
     1. Unzips the dataset locally in the VM and cleans the data into a YOLO-compatible format
     2. Trains YOLOv8n, YOLOv9t, and YOLOv10n on the same dataset as YOLOv11n with the same hyperparameters. The results of each model are saved at `/YOLOv11-Project/runs/model_name_comparison/` (e.g., `/YOLOv11-Project/runs/yolov8n_comparison/`).
-    3. Results of all four models are loaded into the runtime, and analysis is conducted to produce comparison graph and other information. The comparison graphs are saved at `/YOLOv11-Project/multi-version-comparison/`.
+    3. Results of all four models are loaded into the runtime, and analysis is conducted to produce a comparison graph and other information. The comparison graphs are saved at `/YOLOv11-Project/multi-version-comparison/`.
 
-*Note*: All of my results can be found in this repository in the [/results](/results/) directory.
+*Note*: All of my results can be found in this repository in [results.zip](/results.zip).
